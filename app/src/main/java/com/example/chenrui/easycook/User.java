@@ -1,5 +1,9 @@
 package com.example.chenrui.easycook;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * Created by chenrui on 2018/8/8.
  */
@@ -7,10 +11,15 @@ package com.example.chenrui.easycook;
 
 
 public class User {
-    private String username;
-    private String email;
-    private String password;
-    private long time;
+    private String username = "";
+    private String email = "";
+    private String password = "";
+
+    private String profileImgURL = "";
+    private JSONArray shoppingList = new JSONArray();
+    private JSONArray publicRecipes = new JSONArray();
+    private JSONArray favoriteRecipes = new JSONArray();
+    private JSONArray privateRecipes = new JSONArray();
 
     public String getUsername() {
         return username;
@@ -24,7 +33,7 @@ public class User {
         return email;
     }
 
-    public void setEmail(String username) {
+    public void setEmail(String email) {
         this.email = email;
     }
 
@@ -36,20 +45,152 @@ public class User {
         this.password = password;
     }
 
-    public long getTime() {
-        return time;
+    public JSONArray getFavoriteRecipes() {
+        return favoriteRecipes;
     }
 
-    public void setTime(long time) {
-        this.time = time;
+    public void setFavoriteRecipes(JSONArray favoriteRecipes) {
+        this.favoriteRecipes = favoriteRecipes;
     }
 
-    public User(final String username, final String email, final String password, final long timeStamp) {
-        // Default constructor required for calls to DataSnapshot.getValue(User.class)
+    public JSONArray getPrivateRecipes() {
+        return privateRecipes;
+    }
+
+    public JSONArray getPublicRecipes() {
+        return publicRecipes;
+    }
+
+    public String getProfileImgURL() {
+        return profileImgURL;
+    }
+
+    public JSONArray getShoppingList() {
+        return shoppingList;
+    }
+
+    public void setShoppingList(JSONArray shoppingList) {
+        this.shoppingList = shoppingList;
+    }
+
+
+    public String getCleanEmail() {
+        return email.replace('@','_').replace('.','_');
+    }
+
+    public void addFavorite(String recipeID) {
+        try {
+            for (int i = 0; i < this.favoriteRecipes.length(); i++) {
+                if (this.favoriteRecipes.getString(i).equals(recipeID)) {
+                    return;
+                }
+            }
+            this.favoriteRecipes.put(recipeID);
+        } catch (JSONException e) {
+
+        }
+    }
+
+    public void removeFavorite(String recipeID) {
+        try {
+            for (int i = 0; i < this.favoriteRecipes.length(); i++) {
+                if (this.favoriteRecipes.getString(i).equals(recipeID)) {
+                    this.favoriteRecipes.remove(i);
+                    return;
+                }
+            }
+        } catch (JSONException e) {
+
+        }
+    }
+
+    public void addIngredient(String ingredient) {
+        try {
+            for (int i = 0; i < this.shoppingList.length(); i++) {
+                if (((Item)this.shoppingList.get(i)).ItemString.equals(ingredient)) {
+                    return;
+                }
+            }
+            this.shoppingList.put(ingredient);
+        } catch (JSONException e) {
+
+        }
+    }
+
+    public void removeIngredient(String ingredient) {
+        try {
+            for (int i = 0; i < this.shoppingList.length(); i++) {
+                if (((Item)this.shoppingList.get(i)).ItemString.equals(ingredient)) {
+                    this.shoppingList.remove(i);
+                    return;
+                }
+            }
+        } catch (JSONException e) {
+
+        }
+    }
+
+    public User() {}
+
+
+    public User(final String username, final String email) {
+        this.username = username;
+        this.email = email;
+    }
+
+    public User(final String username, final String email, final String password) {
         this.username = username;
         this.email = email;
         this.password = password;
-        this.time = timeStamp;
+    }
+
+//    public User(final String username, final String email, final String password) {
+//        // Default constructor required for calls to DataSnapshot.getValue(User.class)
+//        this.username = username;
+//        this.email = email;
+//        this.password = password;
+//    }
+
+    public User(String username, String email, String password, String profileImgURL, JSONArray shoppingList, JSONArray publicRecipes, JSONArray favoriteRecipes) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.profileImgURL = profileImgURL;
+        this.shoppingList = shoppingList;
+        this.publicRecipes = publicRecipes;
+        this.favoriteRecipes = favoriteRecipes;
+    }
+
+    public JSONObject toJSON() {
+        JSONObject out = new JSONObject();
+        try {
+            out.put("username",this.username);
+            out.put("email",this.email);
+            out.put("password",this.password);
+            out.put("profileImgURL",this.profileImgURL);
+            out.put("shoppingList",this.shoppingList);
+            out.put("publicRecipes",this.publicRecipes);
+            out.put("favoriteRecipes",this.favoriteRecipes);
+            out.put("privateRecipes",this.privateRecipes);
+        } catch (JSONException e) {
+
+        }
+        return out;
+    }
+
+    public void fromJSON(JSONObject profile) {
+        try {
+            this.username = profile.getString("username");
+            this.email = profile.getString("email");
+            this.password = profile.getString("password");
+            this.profileImgURL = profile.getString("profileImgURL");
+            this.shoppingList = profile.getJSONArray("shoppingList");
+            this.publicRecipes = profile.getJSONArray("publicRecipes");
+            this.favoriteRecipes = profile.getJSONArray("favoriteRecipes");
+            this.privateRecipes = profile.getJSONArray("privateRecipes");
+        } catch (JSONException e) {
+
+        }
     }
 }
 

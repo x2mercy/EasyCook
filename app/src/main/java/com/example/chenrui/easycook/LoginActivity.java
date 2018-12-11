@@ -1,5 +1,6 @@
 package com.example.chenrui.easycook;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
@@ -53,11 +54,11 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
 
         setContentView(R.layout.activity_login);
         btnGoogleSignIn = (SignInButton)findViewById(R.id.btnGoogleSignIn);
-        btnSignOut = (Button)findViewById(R.id.btnSignOut);
+       // btnSignOut = (Button)findViewById(R.id.btnSignOut);
         btnGoogleSignIn.setOnClickListener(this);
-        btnSignOut.setOnClickListener(this);
+//        btnSignOut.setOnClickListener(this);
         txt_creat = (TextView) findViewById(R.id.txt_create);
-        txt_forgot = (TextView) findViewById(R.id.txt_forgot);
+        //txt_forgot = (TextView) findViewById(R.id.txt_forgot);
 
         GoogleSignInOptions signInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestEmail().build();
         googleApiClient = new GoogleApiClient.Builder(this).enableAutoManage(this,this).addApi(Auth.GOOGLE_SIGN_IN_API,signInOptions).build();
@@ -70,35 +71,33 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         mPasswordEditText = (EditText) findViewById(R.id.editTextPassword);
         mSubmitButton = (Button) findViewById(R.id.submit);
         txt_creat.setOnClickListener(this);
-        txt_forgot.setOnClickListener(this);
+       // txt_forgot.setOnClickListener(this);
 
 
         // once submit check the information in the database
+
         mSubmitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final String username = mUsernameEditText.getText().toString();
+                final String email = mUsernameEditText.getText().toString();
                 final String password = Utils.md5Encryption(mPasswordEditText.getText().toString());
-                mDatabase.child("users").addListenerForSingleValueEvent(new ValueEventListener() {
+                User profile = new User("",email,password);
+                ProfileSaver profileSaver = new ProfileSaver();
+                profileSaver.setProfile(profile);
+                profileSaver.checkProfile(getBaseContext().getFilesDir(), new ProfileCallback() {
                     @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        // login successfully
-                        if (dataSnapshot.hasChild(username) && (password.equals(dataSnapshot.child(username).child("password").getValue()))) {
+                    public void onCallback(User profile) {
+                        if (profile.getEmail().equals(email) && profile.getPassword().equals(password)&&!password.equals("")) {
                             Log.i( " Your log", "You successfully login");
                             Intent myIntent = new Intent(LoginActivity.this, NavigateActivity.class);
-                            Utils.username = username;
+                            Utils.username = profile.getUsername();
+                            Utils.user = profile;
                             startActivity(myIntent);
-                        // it not
                         } else {
                             Toast.makeText(getBaseContext(),"Please login again", Toast.LENGTH_SHORT).show();
                         }
                     }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
+                },false);
             }
         });
 
@@ -125,20 +124,23 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
             case R.id.btnGoogleSignIn:
                 signIn();
                 break;
-            case R.id.btnSignOut:
-                signOut();
-                break;
+//            case R.id.btnSignOut:
+//                signOut();
+//                break;
             case R.id.txt_create:
                 Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
                 startActivity(intent);
                 break;
-            case R.id.txt_forgot:
-                Intent i = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
-                startActivity(i);
-                break;
+//            case R.id.txt_forgot:
+//                Intent i = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
+//                startActivity(i);
+//                break;
         }
 
+
     }
+
+
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
@@ -163,6 +165,20 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
             String name = account.getDisplayName();
             String email = account.getEmail();
             Uri personPhotoUrl = account.getPhotoUrl();
+            User profile = new User();
+            profile.setUsername(name);
+            profile.setEmail(email);
+            profile.setPassword("");
+            System.out.format("Login profile url: %s %s%n",profile.getUsername(),profile.getEmail());
+            ProfileSaver profileSaver = new ProfileSaver();
+            profileSaver.setProfile(profile);
+            profileSaver.checkProfile(getBaseContext().getFilesDir(), new ProfileCallback() {
+                @Override
+                public void onCallback(User profile) {
+                    Utils.user = profile;
+                }
+            }, true);
+
         }
         else{
         }
@@ -173,7 +189,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     protected void onActivityResult(int requestCode,int resultCode,Intent data){
         super.onActivityResult(requestCode,resultCode,data);
 
-        if(requestCode==REQ_CODE){
+        if(requestCode==REQ_CODE && resultCode == Activity.RESULT_OK){
 
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
             handleResult(result);
